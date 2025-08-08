@@ -5,15 +5,21 @@ import dotenv from "dotenv";
 import formRoutes from "./routes/forms.js";
 import responseRoutes from "./routes/responses.js";
 import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
-const __dirname = path.resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin:
+      process.env.NODE_ENV === "production"
+        ? ["https://interactive-form-builder.onrender.com"]
+        : ["http://localhost:3000"],
     credentials: true,
   })
 );
@@ -24,11 +30,47 @@ app.use("/api/forms", formRoutes);
 app.use("/api/responses", responseRoutes);
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  // Try multiple possible paths for the frontend dist directory
+  const possiblePaths = [
+    path.join(__dirname, "../frontend/dist"),
+    path.join(__dirname, "../../frontend/dist"),
+    path.join(__dirname, "../dist"),
+    path.join(__dirname, "dist"),
+  ];
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-  });
+  let staticPath = null;
+  let indexPath = null;
+
+  for (const possiblePath of possiblePaths) {
+    const indexFile = path.join(possiblePath, "index.html");
+    console.log(`Checking for frontend files at: ${possiblePath}`);
+    console.log(`Looking for index.html at: ${indexFile}`);
+
+    if (fs.existsSync(indexFile)) {
+      staticPath = possiblePath;
+      indexPath = indexFile;
+      console.log(`✅ Found frontend files at: ${staticPath}`);
+      break;
+    }
+  }
+
+  if (staticPath && indexPath) {
+    app.use(express.static(staticPath));
+
+    app.get("*", (req, res) => {
+      res.sendFile(indexPath);
+    });
+  } else {
+    console.error("❌ Frontend dist files not found! Checked paths:");
+    possiblePaths.forEach((p) => console.error(`  - ${p}`));
+
+    app.get("*", (req, res) => {
+      res.status(500).json({
+        error: "Frontend files not found",
+        checkedPaths: possiblePaths,
+      });
+    });
+  }
 }
 
 const connectDB = async () => {
