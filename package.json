@@ -5,9 +5,10 @@
   "main": "backend/server.js",
   "type": "module",
   "scripts": {
-    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend && echo 'Build completed successfully'",
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend && node verify-build.js",
     "start": "npm run start --prefix backend",
-    "postbuild": "echo 'Checking build output:' && find . -name 'index.html' -type f 2>/dev/null || echo 'No index.html files found'"
+    "verify": "node verify-build.js",
+    "postbuild": "echo 'Build process completed'"
   },
   "engines": {
     "node": ">=18.0.0"

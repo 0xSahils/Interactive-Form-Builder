@@ -59,8 +59,14 @@ if (process.env.NODE_ENV === "production") {
     // Render-specific paths
     "/opt/render/project/src/frontend/dist",
     "/opt/render/project/frontend/dist",
+    "/opt/render/project/dist",
     path.join(process.cwd(), "frontend/dist"),
     path.join(process.cwd(), "../frontend/dist"),
+    path.join(process.cwd(), "dist"),
+    // Additional fallback paths
+    path.resolve(process.cwd(), "frontend", "dist"),
+    path.resolve(__dirname, "..", "frontend", "dist"),
+    path.resolve(".", "frontend", "dist"),
   ];
 
   let staticPath = null;
@@ -105,6 +111,11 @@ if (process.env.NODE_ENV === "production") {
       });
     });
   }
+} else {
+  // Development mode - serve a simple message
+  app.get("*", (req, res) => {
+    res.json({ message: "API is running in development mode" });
+  });
 }
 
 const connectDB = async () => {
