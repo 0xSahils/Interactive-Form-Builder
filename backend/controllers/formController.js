@@ -42,7 +42,9 @@ const isValidObjectId = (id) => {
 export const getAllForms = async (req, res) => {
   try {
     const forms = await Form.find()
-      .select("title description headerImage isPublished createdAt updatedAt")
+      .select(
+        "title description headerImage questions isPublished createdAt updatedAt"
+      )
       .sort({ updatedAt: -1 });
 
     res.json({

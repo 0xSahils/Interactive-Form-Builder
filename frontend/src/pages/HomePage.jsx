@@ -25,10 +25,13 @@ const HomePage = () => {
   const fetchForms = async () => {
     try {
       const response = await formAPI.getAllForms();
-      setForms(response.data);
+      console.log("API Response:", response.data); // Debug log
+      console.log("Forms data:", response.data.data); // Debug log
+      setForms(response.data.data || []); // Access the nested data array
     } catch (error) {
       toast.error("Failed to fetch forms");
       console.error("Error fetching forms:", error);
+      setForms([]); // Ensure forms is always an array
     } finally {
       setLoading(false);
     }
@@ -53,10 +56,10 @@ const HomePage = () => {
     try {
       const response = await formAPI.togglePublish(formId);
       setForms(
-        forms.map((form) => (form._id === formId ? response.data : form))
+        forms.map((form) => (form._id === formId ? response.data.data : form))
       );
       toast.success(
-        response.data.isPublished ? "Form published" : "Form unpublished"
+        response.data.data.isPublished ? "Form published" : "Form unpublished"
       );
     } catch (error) {
       toast.error("Failed to update form status");

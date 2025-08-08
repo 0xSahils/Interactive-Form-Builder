@@ -19,20 +19,22 @@ const FormAnalytics = () => {
   const fetchAnalytics = async () => {
     try {
       const response = await responseAPI.getFormAnalytics(id);
-      setAnalytics(response.data);
+      setAnalytics(response.data.data || null);
     } catch (error) {
       toast.error("Failed to fetch analytics");
       console.error("Error fetching analytics:", error);
+      setAnalytics(null);
     }
   };
 
   const fetchResponses = async () => {
     try {
       const response = await responseAPI.getFormResponses(id);
-      setResponses(response.data);
+      setResponses(response.data.data || []);
     } catch (error) {
       toast.error("Failed to fetch responses");
       console.error("Error fetching responses:", error);
+      setResponses([]);
     } finally {
       setLoading(false);
     }

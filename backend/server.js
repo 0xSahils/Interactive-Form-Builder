@@ -4,16 +4,32 @@ import cors from "cors";
 import dotenv from "dotenv";
 import formRoutes from "./routes/forms.js";
 import responseRoutes from "./routes/responses.js";
+import path from "path";
 
 dotenv.config();
 
 const app = express();
+const __dirname = path.resolve();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.use("/api/forms", formRoutes);
 app.use("/api/responses", responseRoutes);
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  });
+}
 
 const connectDB = async () => {
   try {

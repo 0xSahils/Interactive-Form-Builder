@@ -32,7 +32,7 @@ const FormBuilder = () => {
     setLoading(true);
     try {
       const response = await formAPI.getForm(id);
-      setForm(response.data);
+      setForm(response.data.data || createEmptyForm());
     } catch (error) {
       toast.error("Failed to fetch form");
       console.error("Error fetching form:", error);
@@ -58,9 +58,9 @@ const FormBuilder = () => {
       } else {
         response = await formAPI.createForm(form);
         toast.success("Form created successfully");
-        navigate(`/builder/${response.data._id}`);
+        navigate(`/builder/${response.data.data._id}`);
       }
-      setForm(response.data);
+      setForm(response.data.data || form);
     } catch (error) {
       toast.error("Failed to save form");
       console.error("Error saving form:", error);

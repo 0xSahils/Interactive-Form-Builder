@@ -5,12 +5,8 @@
   "main": "backend/server.js",
   "type": "module",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
-    "install-backend": "cd backend && npm install",
-    "install-frontend": "cd frontend && npm install",
-    "build": "cd frontend && npm run build",
-    "postinstall": "npm run install-backend"
+   "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "npm run start --prefix backend"
   },
   "engines": {
     "node": ">=18.0.0"
