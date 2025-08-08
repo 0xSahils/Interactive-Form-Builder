@@ -35,16 +35,27 @@ if (process.env.NODE_ENV === "production") {
   console.log(`__dirname: ${__dirname}`);
   console.log(`process.cwd(): ${process.cwd()}`);
 
-  // Check what files exist in the project root
+  // Check what files exist in the project root and parent
   try {
     const rootContents = fs.readdirSync(process.cwd());
-    console.log("📁 Root directory contents:", rootContents);
+    console.log("📁 Backend directory contents:", rootContents);
 
-    if (rootContents.includes("frontend")) {
-      const frontendContents = fs.readdirSync(
-        path.join(process.cwd(), "frontend")
-      );
+    // Check parent directory (should be /opt/render/project/src)
+    const parentDir = path.resolve(process.cwd(), "..");
+    console.log("📁 Parent directory path:", parentDir);
+    const parentContents = fs.readdirSync(parentDir);
+    console.log("📁 Parent directory contents:", parentContents);
+
+    if (parentContents.includes("frontend")) {
+      const frontendContents = fs.readdirSync(path.join(parentDir, "frontend"));
       console.log("📁 Frontend directory contents:", frontendContents);
+
+      if (frontendContents.includes("dist")) {
+        const distContents = fs.readdirSync(
+          path.join(parentDir, "frontend", "dist")
+        );
+        console.log("📁 Frontend/dist contents:", distContents);
+      }
     }
   } catch (error) {
     console.log("❌ Error reading directories:", error.message);
@@ -52,14 +63,17 @@ if (process.env.NODE_ENV === "production") {
 
   // Try multiple possible paths for the frontend dist directory
   const possiblePaths = [
+    // Most likely correct path based on debug info
+    path.resolve(process.cwd(), "..", "frontend", "dist"),
     path.join(__dirname, "../frontend/dist"),
     path.join(__dirname, "../../frontend/dist"),
     path.join(__dirname, "../dist"),
     path.join(__dirname, "dist"),
-    // Render-specific paths
+    // Render-specific absolute paths
     "/opt/render/project/src/frontend/dist",
     "/opt/render/project/frontend/dist",
     "/opt/render/project/dist",
+    // Current working directory variants
     path.join(process.cwd(), "frontend/dist"),
     path.join(process.cwd(), "../frontend/dist"),
     path.join(process.cwd(), "dist"),
