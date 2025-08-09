@@ -5,7 +5,8 @@
   "main": "backend/server.js",
   "type": "module",
   "scripts": {
-    "build": "npm install --prefix backend && npm install --prefix frontend && cd frontend && npm run build && cd .. && node verify-build.js",
+    "build": "npm ci --prefix backend --only=production && npm ci --prefix frontend && cd frontend && npm run build && cd .. && node verify-build.js",
+    "build:dev": "npm install --prefix backend && npm install --prefix frontend && cd frontend && npm run build && cd .. && node verify-build.js",
     "start": "npm run start --prefix backend",
     "verify": "node verify-build.js",
     "postbuild": "echo 'Build process completed'"

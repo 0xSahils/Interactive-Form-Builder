@@ -6,6 +6,7 @@ import formRoutes from "./routes/forms.js";
 import responseRoutes from "./routes/responses.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 dotenv.config();
 
@@ -30,14 +31,30 @@ app.use("/api/responses", responseRoutes);
 
 if (process.env.NODE_ENV === "production") {
   const staticPath = path.join(__dirname, "../frontend/dist");
+  console.log("Serving static files from:", staticPath);
 
-  app.use(express.static(staticPath));
+  // Check if dist directory exists
+  if (!fs.existsSync(staticPath)) {
+    console.error("Static files directory not found:", staticPath);
+  }
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(staticPath, "index.html"));
+  app.use(
+    express.static(staticPath, {
+      maxAge: "1d",
+      etag: false,
+    })
+  );
+
+  app.get("*", (_req, res) => {
+    const indexPath = path.join(staticPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ error: "Frontend build not found" });
+    }
   });
 } else {
-  app.get("*", (req, res) => {
+  app.get("*", (_req, res) => {
     res.json({ message: "API is running in development mode" });
   });
 }

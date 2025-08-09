@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: form-builder
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mongodb
+          property: connectionString
+    autoDeploy: false
