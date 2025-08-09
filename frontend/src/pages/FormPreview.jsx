@@ -23,7 +23,10 @@ const FormPreview = () => {
   const fetchForm = async () => {
     try {
       const response = await formAPI.getForm(id);
-      setForm(response.data);
+      const formData = response.data.data || response.data;
+      console.log("FormPreview - API Response:", response.data);
+      console.log("FormPreview - Form Data:", formData);
+      setForm(formData);
     } catch (error) {
       toast.error("Failed to fetch form");
       console.error("Error fetching form:", error);

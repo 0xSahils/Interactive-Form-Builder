@@ -33,20 +33,34 @@ const FormFill = () => {
   const fetchForm = async () => {
     try {
       const response = await formAPI.getForm(id);
-      const formData = response.data;
+      const formData = response.data.data || response.data;
+      console.log("FormFill - API Response:", response.data);
+      console.log("FormFill - Form Data:", formData);
 
-      if (!formData.isPublished) {
-        toast.error("This form is not published");
+      if (!formData) {
+        console.error("FormFill - No form data received");
+        toast.error("Form not found");
+        setForm(null);
         return;
       }
 
+      if (!formData.isPublished) {
+        console.log("FormFill - Form is not published:", formData.isPublished);
+        toast.error("This form is not published");
+        setForm(null);
+        return;
+      }
+
+      console.log("FormFill - Setting form data:", formData);
       setForm(formData);
 
       // Initialize responses object
       const initialResponses = {};
-      formData.questions.forEach((_, index) => {
-        initialResponses[index] = null;
-      });
+      if (formData.questions && formData.questions.length > 0) {
+        formData.questions.forEach((_, index) => {
+          initialResponses[index] = null;
+        });
+      }
       setResponses(initialResponses);
     } catch (error) {
       toast.error("Failed to load form");
