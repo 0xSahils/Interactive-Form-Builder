@@ -29,10 +29,14 @@ const validateResponseData = (data) => {
 
 export const submitResponse = async (req, res) => {
   try {
+    console.log("=== Response Submission Debug ===");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+
     const { formId, responses } = req.body;
 
     const validationErrors = validateResponseData(req.body);
     if (validationErrors.length > 0) {
+      console.log("Validation errors:", validationErrors);
       return res.status(400).json({
         success: false,
         message: "Validation failed",
@@ -58,25 +62,34 @@ export const submitResponse = async (req, res) => {
     const processedResponses = responses.map((response, index) => {
       const question = form.questions[index];
       let score = 0;
-      let maxScore = 0;
+      let maxScore = 1; // Default to 1 to avoid division by zero
 
       if (question) {
+        console.log(`Processing question ${index}:`, question.type);
+        console.log(`User response:`, response);
+
+        // Extract the actual answer data from the response
+        const userAnswer = response.answer || response.userAnswer || response;
+
         switch (question.type) {
           case "categorize":
-            maxScore = question.categories?.length || 0;
-            if (response.answer && Array.isArray(response.answer)) {
-              score = response.answer.filter((item, idx) => {
-                const correctCategory = question.items?.[idx]?.category;
+            const categorizeData = question.categorizeData;
+            maxScore = categorizeData?.items?.length || 1;
+            if (userAnswer && Array.isArray(userAnswer)) {
+              score = userAnswer.filter((item, idx) => {
+                const correctCategory =
+                  categorizeData?.items?.[idx]?.correctCategory;
                 return item.category === correctCategory;
               }).length;
             }
             break;
 
           case "cloze":
-            maxScore = question.blanks?.length || 0;
-            if (response.answer && Array.isArray(response.answer)) {
-              score = response.answer.filter((answer, idx) => {
-                const correctAnswer = question.blanks?.[idx]?.correctAnswer;
+            const clozeData = question.clozeData;
+            maxScore = clozeData?.blanks?.length || 1;
+            if (userAnswer && Array.isArray(userAnswer)) {
+              score = userAnswer.filter((answer, idx) => {
+                const correctAnswer = clozeData?.blanks?.[idx]?.word;
                 return (
                   answer?.toLowerCase().trim() ===
                   correctAnswer?.toLowerCase().trim()
@@ -86,10 +99,12 @@ export const submitResponse = async (req, res) => {
             break;
 
           case "comprehension":
-            maxScore = question.questions?.length || 0;
-            if (response.answer && Array.isArray(response.answer)) {
-              score = response.answer.filter((answer, idx) => {
-                const correctAnswer = question.questions?.[idx]?.correctAnswer;
+            const comprehensionData = question.comprehensionData;
+            maxScore = comprehensionData?.questions?.length || 1;
+            if (userAnswer && Array.isArray(userAnswer)) {
+              score = userAnswer.filter((answer, idx) => {
+                const correctAnswer =
+                  comprehensionData?.questions?.[idx]?.correctAnswer;
                 return answer === correctAnswer;
               }).length;
             }
@@ -97,12 +112,15 @@ export const submitResponse = async (req, res) => {
         }
       }
 
+      console.log(`Question ${index} score: ${score}/${maxScore}`);
+
       return {
-        questionId: question?._id,
-        questionType: question?.type,
-        answer: response.answer,
+        questionIndex: index,
+        questionType: question?.type || "unknown",
+        userAnswers: response,
         score,
         maxScore,
+        percentage: maxScore > 0 ? Math.round((score / maxScore) * 100) : 0,
       };
     });
 
@@ -122,7 +140,11 @@ export const submitResponse = async (req, res) => {
       data: savedResponse,
     });
   } catch (error) {
-    console.error("Error submitting response:", error);
+    console.error("=== Response Submission Error ===");
+    console.error("Error details:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Error name:", error.name);
+    console.error("Error message:", error.message);
 
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -131,9 +153,18 @@ export const submitResponse = async (req, res) => {
       });
     }
 
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Data validation error",
+        details: error.message,
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Server error while submitting response",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
