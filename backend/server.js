@@ -31,8 +31,6 @@ app.use("/api/responses", responseRoutes);
 if (process.env.NODE_ENV === "production") {
   const staticPath = path.join(__dirname, "../frontend/dist");
 
-  console.log("� Serving static files from:", staticPath);
-
   app.use(express.static(staticPath));
 
   app.get("*", (req, res) => {
