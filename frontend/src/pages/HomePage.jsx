@@ -55,11 +55,10 @@ const HomePage = () => {
   const handleTogglePublish = async (formId) => {
     try {
       const response = await formAPI.togglePublish(formId);
-      setForms(
-        forms.map((form) => (form._id === formId ? response.data.data : form))
-      );
+      const updatedForm = response.data.data || response.data;
+      setForms(forms.map((form) => (form._id === formId ? updatedForm : form)));
       toast.success(
-        response.data.data.isPublished ? "Form published" : "Form unpublished"
+        updatedForm.isPublished ? "Form published" : "Form unpublished"
       );
     } catch (error) {
       toast.error("Failed to update form status");

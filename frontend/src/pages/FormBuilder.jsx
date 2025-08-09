@@ -32,7 +32,12 @@ const FormBuilder = () => {
     setLoading(true);
     try {
       const response = await formAPI.getForm(id);
-      setForm(response.data.data || createEmptyForm());
+      const formData = response.data.data || response.data || createEmptyForm();
+      // Ensure questions array exists
+      if (!formData.questions) {
+        formData.questions = [];
+      }
+      setForm(formData);
     } catch (error) {
       toast.error("Failed to fetch form");
       console.error("Error fetching form:", error);
@@ -60,7 +65,12 @@ const FormBuilder = () => {
         toast.success("Form created successfully");
         navigate(`/builder/${response.data.data._id}`);
       }
-      setForm(response.data.data || form);
+      const updatedForm = response.data.data || response.data || form;
+      // Ensure questions array exists
+      if (!updatedForm.questions) {
+        updatedForm.questions = [];
+      }
+      setForm(updatedForm);
     } catch (error) {
       toast.error("Failed to save form");
       console.error("Error saving form:", error);
@@ -83,9 +93,14 @@ const FormBuilder = () => {
 
     try {
       const response = await formAPI.togglePublish(id);
-      setForm(response.data);
+      const updatedForm = response.data.data || response.data;
+      // Ensure questions array exists
+      if (!updatedForm.questions) {
+        updatedForm.questions = [];
+      }
+      setForm(updatedForm);
       toast.success(
-        response.data.isPublished
+        updatedForm.isPublished
           ? "Form published successfully!"
           : "Form unpublished successfully!"
       );
@@ -228,73 +243,86 @@ const FormBuilder = () => {
 
       {/* Questions */}
       <div className="space-y-6">
-        {form.questions.map((question, index) => (
-          <div key={index} className="question-builder">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-lg font-medium text-secondary-900">
-                Question {index + 1} -{" "}
-                {question.type.charAt(0).toUpperCase() + question.type.slice(1)}
-              </h4>
-              <div className="flex items-center space-x-2">
-                {index > 0 && (
+        {form.questions && form.questions.length > 0 ? (
+          form.questions.map((question, index) => (
+            <div key={index} className="question-builder">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-medium text-secondary-900">
+                  Question {index + 1} -{" "}
+                  {question.type.charAt(0).toUpperCase() +
+                    question.type.slice(1)}
+                </h4>
+                <div className="flex items-center space-x-2">
+                  {index > 0 && (
+                    <button
+                      onClick={() => handleMoveQuestion(index, index - 1)}
+                      className="btn-outline text-xs"
+                    >
+                      ↑
+                    </button>
+                  )}
+                  {index < form.questions.length - 1 && (
+                    <button
+                      onClick={() => handleMoveQuestion(index, index + 1)}
+                      className="btn-outline text-xs"
+                    >
+                      ↓
+                    </button>
+                  )}
                   <button
-                    onClick={() => handleMoveQuestion(index, index - 1)}
-                    className="btn-outline text-xs"
+                    onClick={() => handleDeleteQuestion(index)}
+                    className="btn-outline text-xs text-red-600 hover:bg-red-50"
                   >
-                    ↑
+                    <Trash2 className="h-4 w-4" />
                   </button>
-                )}
-                {index < form.questions.length - 1 && (
-                  <button
-                    onClick={() => handleMoveQuestion(index, index + 1)}
-                    className="btn-outline text-xs"
-                  >
-                    ↓
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDeleteQuestion(index)}
-                  className="btn-outline text-xs text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                </div>
               </div>
+
+              {question.type === "categorize" && (
+                <CategorizeBuilder
+                  data={question.categorizeData}
+                  onChange={(data) =>
+                    handleUpdateQuestion(index, {
+                      ...question,
+                      categorizeData: data,
+                    })
+                  }
+                />
+              )}
+
+              {question.type === "cloze" && (
+                <ClozeBuilder
+                  data={question.clozeData}
+                  onChange={(data) =>
+                    handleUpdateQuestion(index, {
+                      ...question,
+                      clozeData: data,
+                    })
+                  }
+                />
+              )}
+
+              {question.type === "comprehension" && (
+                <ComprehensionBuilder
+                  data={question.comprehensionData}
+                  onChange={(data) =>
+                    handleUpdateQuestion(index, {
+                      ...question,
+                      comprehensionData: data,
+                    })
+                  }
+                />
+              )}
             </div>
-
-            {question.type === "categorize" && (
-              <CategorizeBuilder
-                data={question.categorizeData}
-                onChange={(data) =>
-                  handleUpdateQuestion(index, {
-                    ...question,
-                    categorizeData: data,
-                  })
-                }
-              />
-            )}
-
-            {question.type === "cloze" && (
-              <ClozeBuilder
-                data={question.clozeData}
-                onChange={(data) =>
-                  handleUpdateQuestion(index, { ...question, clozeData: data })
-                }
-              />
-            )}
-
-            {question.type === "comprehension" && (
-              <ComprehensionBuilder
-                data={question.comprehensionData}
-                onChange={(data) =>
-                  handleUpdateQuestion(index, {
-                    ...question,
-                    comprehensionData: data,
-                  })
-                }
-              />
-            )}
+          ))
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-secondary-600 mb-4">No questions added yet</p>
+            <p className="text-sm text-secondary-500">
+              Add your first question below
+            </p>
           </div>
-        ))}
+        )}
 
         {/* Add Question Buttons */}
         <div className="card">
